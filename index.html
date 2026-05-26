@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kisten">
+<title>Kisten-Inventar</title>
+<style>
+:root {
+  --bg:#fff;--bg2:#f5f5f5;--bg3:#ebebeb;
+  --text:#111;--text2:#555;--text3:#999;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-text:#27500A;
+  --red:#A32D2D;--red-bg:#FCEBEB;
+  --amber-bg:#FAEEDA;--amber-text:#633806;
+  --r:12px;--rs:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1a1a;--bg2:#252525;--bg3:#303030;
+    --text:#f0f0f0;--text2:#aaa;--text3:#666;
+    --border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);
+    --blue-bg:#0c2e52;--blue-text:#85B7EB;
+    --green-bg:#1a3309;--green-text:#97C459;
+    --red-bg:#3d1010;--amber-bg:#3d2e10;--amber-text:#EF9F27;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:600px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:20px;font-weight:600}
+.sub{font-size:13px;color:var(--text2);margin-top:2px}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:10px 4px 8px;border:none;background:none;cursor:pointer;font-size:11px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s;font-family:inherit}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab.active{color:var(--blue)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:12px;border:0.5px solid var(--border)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px}
+.btn{width:100%;padding:13px;border-radius:var(--r);font-size:15px;font-weight:500;cursor:pointer;border:none;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.btn-primary{background:var(--text);color:var(--bg)}.btn-primary:active{opacity:.8}.btn-primary:disabled{opacity:.4}
+.btn-secondary{background:none;color:var(--text);border:0.5px solid var(--border2);margin-top:8px}.btn-secondary:active{background:var(--bg2)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:none;margin-top:8px}
+textarea,input[type=text],input[type=search]{width:100%;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--rs);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+textarea{resize:vertical;min-height:60px}
+input:focus,textarea:focus{border-color:var(--blue)}
+.upload-area{border:2px dashed var(--border2);border-radius:var(--r);padding:28px 16px;text-align:center;cursor:pointer;color:var(--text2)}
+.upload-area svg{width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 8px}
+.upload-area:active{background:var(--bg2)}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-top:10px}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:var(--rs);overflow:hidden}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.voice-btn{width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--r);background:none;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.voice-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.voice-btn.rec{border-color:#E24B4A;color:#E24B4A;background:var(--red-bg);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.transcript{margin-top:8px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rs);font-size:13px;color:var(--text2);min-height:36px}
+.cat-row{display:flex;flex-wrap:wrap;gap:6px}
+.cat-pill{padding:6px 12px;border-radius:20px;border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;transition:all .15s}
+.cat-pill.on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text);font-weight:500}
+.item-list{display:flex;flex-direction:column;gap:2px}
+.item-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--rs)}
+.item-row:active{background:var(--bg3)}
+.item-row input{flex:1;border:none;background:none;font-size:14px;font-family:inherit;color:var(--text);outline:none;padding:0}
+.item-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px;line-height:1}
+.add-row{display:flex;gap:8px;margin-top:8px}
+.add-row input{flex:1}
+.add-row button{padding:10px 14px;border:0.5px solid var(--border2);border-radius:var(--rs);background:none;cursor:pointer;font-size:13px;color:var(--text2);white-space:nowrap;font-family:inherit}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.b-blue{background:var(--blue-bg);color:var(--blue-text)}
+.b-green{background:var(--green-bg);color:var(--green-text)}
+.box-card{background:var(--bg2);border-radius:var(--r);padding:13px 14px;margin-bottom:10px;border:0.5px solid var(--border);cursor:pointer;transition:background .1s}
+.box-card:active{background:var(--bg3)}
+.box-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px;flex-wrap:wrap}
+.box-id{font-size:15px;font-weight:600}
+.box-items{font-size:12px;color:var(--text2);line-height:1.5}
+.box-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.scanner-wrap{position:relative;background:#000;border-radius:var(--r);overflow:hidden}
+.scanner-wrap video{width:100%;display:block;max-height:260px;object-fit:cover}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.sf{width:170px;height:170px;position:relative}
+.sf-tl,.sf-tr,.sf-bl,.sf-br{position:absolute;width:32px;height:32px}
+.sf-tl{top:0;left:0;border-top:3px solid #fff;border-left:3px solid #fff;border-radius:4px 0 0 0}
+.sf-tr{top:0;right:0;border-top:3px solid #fff;border-right:3px solid #fff;border-radius:0 4px 0 0}
+.sf-bl{bottom:0;left:0;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 4px}
+.sf-br{bottom:0;right:0;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 4px 0}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.75);animation:scanline 2s ease-in-out infinite}
+@keyframes scanline{0%,100%{top:8%}50%{top:85%}}
+.res-ok{background:var(--green-bg);border:0.5px solid #97C459;border-radius:var(--r);padding:16px;text-align:center}
+.res-ok svg{width:36px;height:36px;stroke:#3B6D11;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 8px}
+.res-err{background:var(--red-bg);border:0.5px solid #F09595;border-radius:var(--r);padding:16px;text-align:center}
+.res-err svg{width:36px;height:36px;stroke:#A32D2D;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 8px}
+.sheet-back{background:rgba(0,0,0,.45);border-radius:var(--r);padding:16px;margin-top:12px}
+.sheet{background:var(--bg);border-radius:var(--r);padding:18px}
+.sheet h2{font-size:20px;font-weight:600;margin-bottom:2px}
+.sheet .meta{font-size:12px;color:var(--text3);margin-bottom:14px}
+.sheet-items{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;max-height:200px;overflow-y:auto}
+.sheet-item{font-size:14px;padding:6px 10px;background:var(--bg2);border-radius:var(--rs)}
+.s-actions{display:flex;gap:8px}
+.s-actions button{flex:1;padding:10px;border-radius:var(--rs);font-family:inherit;font-size:13px;cursor:pointer;border:0.5px solid var(--border2);background:none;color:var(--text)}
+.s-actions .ok{background:var(--text);color:var(--bg);border-color:transparent}
+.qr-wrap{display:flex;justify-content:center;margin:12px 0}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.fp{padding:5px 12px;border-radius:16px;border:0.5px solid var(--border2);background:none;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit}
+.fp.on{background:var(--text);color:var(--bg);border-color:transparent}
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty svg{width:44px;height:44px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 10px}
+.highlight{background:var(--amber-bg);border-radius:2px;padding:0 2px}
+.info-box{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--rs);font-size:13px;margin-bottom:12px}
+.info-ok{background:var(--green-bg);color:var(--green-text)}
+.info-warn{background:var(--amber-bg);color:var(--amber-text)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-g{background:#3B6D11}.dot-a{background:#854F0B}
+.header-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.backup-btn{background:none;border:0.5px solid var(--border);border-radius:var(--rs);padding:7px 10px;cursor:pointer;font-size:12px;color:var(--text2);font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.backup-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header-row">
+    <div>
+      <h1>📦 Kisten-Inventar</h1>
+      <div class="sub" id="box-count">0 Kisten erfasst</div>
+    </div>
+    <button class="backup-btn" onclick="goTab('settings')">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Backup
+    </button>
+  </div>
+
+  <div id="status-bar"></div>
+
+  <!-- NEU -->
+  <div class="panel active" id="panel-new">
+    <div class="card">
+      <div class="card-title">Fotos der Kiste</div>
+      <div class="upload-area" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+        <div style="font-size:14px;font-weight:500;margin-bottom:3px">Foto hinzufügen</div>
+        <div style="font-size:12px">Mehrere Fotos möglich</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" multiple style="display:none" onchange="addPhotos(this)">
+      <div class="photo-grid" id="photo-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Spracheingabe</div>
+      <button class="voice-btn" id="voice-btn" onclick="toggleVoice()">
+        <svg id="voice-icon" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8"/></svg>
+        <span id="voice-label">Aufnahme starten</span>
+      </button>
+      <div class="transcript" id="voice-transcript" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notizen</div>
+      <textarea id="notes-input" placeholder="z.B. Winterkleider, Küche 2023, schwere Bücher..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Kategorie</div>
+      <div class="cat-row" id="cat-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Standort (optional)</div>
+      <input type="text" id="loc-input" placeholder="z.B. Keller Regal 3, Estrich, Garage">
+    </div>
+
+    <button class="btn btn-primary" id="analyze-btn" onclick="analyzeBox()">
+      <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      KI-Analyse starten
+    </button>
+
+    <div id="result-area" style="display:none;margin-top:12px">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--border)">
+          <span style="font-size:14px;font-weight:600">Inhaltsliste bearbeiten</span>
+          <button onclick="addItemField()" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit">+ Hinzufügen</button>
+        </div>
+        <div class="item-list" id="item-list" style="padding:6px"></div>
+        <div class="add-row" style="padding:6px 8px 10px">
+          <input type="text" id="new-item-input" placeholder="Artikel hinzufügen..." onkeydown="if(event.key==='Enter')addNewItem()">
+          <button onclick="addNewItem()">Hinzufügen</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBox()" style="margin-top:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Kiste speichern & QR drucken
+      </button>
+    </div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="panel" id="panel-scan">
+    <div class="card">
+      <div class="card-title">QR-Code scannen</div>
+      <div id="scan-start">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Halte die Kamera auf den QR-Code der Kiste.</p>
+        <button class="btn btn-primary" onclick="startScanner()">
+          <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="12" cy="12" r="4"/></svg>
+          Kamera starten
+        </button>
+        <div style="margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border)">
+          <p style="font-size:12px;color:var(--text3);margin-bottom:8px">Oder ID direkt eingeben:</p>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="manual-id" placeholder="K-0003" style="flex:1" onkeydown="if(event.key==='Enter')manualLookup()">
+            <button onclick="manualLookup()" style="padding:10px 16px;border:0.5px solid var(--border2);border-radius:var(--rs);background:none;cursor:pointer;font-size:13px;color:var(--text);font-family:inherit">Suchen</button>
+          </div>
+        </div>
+      </div>
+      <div id="scan-active" style="display:none">
+        <div class="scanner-wrap">
+          <video id="scan-video" autoplay playsinline muted></video>
+          <div class="scan-overlay">
+            <div class="sf">
+              <div class="sf-tl"></div><div class="sf-tr"></div>
+              <div class="sf-bl"></div><div class="sf-br"></div>
+              <div class="scan-line"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text2);text-align:center;margin:10px 0">Suche nach QR-Code...</p>
+        <button class="btn btn-secondary" onclick="stopScanner()">Abbrechen</button>
+      </div>
+      <div id="scan-result" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- LISTE -->
+  <div class="panel" id="panel-list">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div id="box-list"></div>
+  </div>
+
+  <!-- SUCHE -->
+  <div class="panel" id="panel-search">
+    <input type="search" id="search-input" placeholder="Artikel suchen... z.B. Bohrmaschine" oninput="doSearch(this.value)" style="margin-bottom:12px">
+    <div id="search-results"></div>
+  </div>
+
+  <!-- EINSTELLUNGEN -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <div class="card-title">💾 Backup exportieren</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Speichert alle Kisten als <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">kisten-backup.json</code>. Danach in Google Drive oder iCloud ablegen.
+      </p>
+      <button class="btn btn-primary" onclick="exportJSON()">
+        <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Backup herunterladen
+      </button>
+    </div>
+    <div class="card">
+      <div class="card-title">📂 Backup importieren</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Lädt eine zuvor exportierte JSON-Datei. Kisten werden zusammengeführt – keine Daten gehen verloren.
+      </p>
+      <button class="btn btn-primary" onclick="document.getElementById('import-input').click()">
+        <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Backup laden
+      </button>
+      <input type="file" id="import-input" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+      <div id="import-status" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">ℹ️ Anleitung</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        <b style="color:var(--text)">iPhone → Google Drive:</b><br>
+        Export → Dateien-App → In Google Drive verschieben<br><br>
+        <b style="color:var(--text)">Neues Gerät einrichten:</b><br>
+        Backup-Datei holen → Importieren<br><br>
+        <b style="color:var(--text)">Empfehlung:</b> Nach jeder Session exportieren.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚠️ Daten löschen</div>
+      <button class="btn btn-danger" onclick="clearAll()">Alle Kisten-Daten löschen</button>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--text3)">Version 1.1 · KI via Claude API · QR-Scan via jsQR</div>
+    </div>
+  </div>
+
+  <!-- QR SHEET -->
+  <div id="qr-sheet" style="display:none">
+    <div class="sheet-back">
+      <div class="sheet">
+        <h2 id="sheet-id"></h2>
+        <div class="meta" id="sheet-meta"></div>
+        <div class="qr-wrap"><canvas id="qr-canvas" width="200" height="200"></canvas></div>
+        <div class="sheet-items" id="sheet-items"></div>
+        <div class="s-actions">
+          <button onclick="printQR()">🖨 Drucken</button>
+          <button onclick="deleteBox()" style="color:var(--red);border-color:#F09595">🗑 Löschen</button>
+          <button class="ok" onclick="closeSheet()">Schliessen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="goTab('new')" id="tab-new">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Neu
+  </button>
+  <button class="tab" onclick="goTab('scan')" id="tab-scan">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="17" y1="14" x2="20" y2="14"/><line x1="17" y1="17" x2="20" y2="17"/><line x1="17" y1="20" x2="20" y2="20"/></svg>Scannen
+  </button>
+  <button class="tab" onclick="goTab('list')" id="tab-list">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Kisten
+  </button>
+  <button class="tab" onclick="goTab('search')" id="tab-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Suche
+  </button>
+  <button class="tab" onclick="goTab('settings')" id="tab-settings">
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Backup
+  </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+const CATS=['Kleidung','Küche','Bücher','Werkzeug','Elektronik','Deko','Sport','Dokumente','Spielzeug','Diverses'];
+let A={
+  boxes:JSON.parse(localStorage.getItem('kisten_v2')||'[]'),
+  photos:[],voiceText:'',selectedCat:'',currentItems:[],
+  recognition:null,isRecording:false,
+  scanStream:null,scanRaf:null,activeBoxId:null
+};
+
+function init(){renderCatGrid();updateCount();updateStatusBar();}
+function updateCount(){document.getElementById('box-count').textContent=A.boxes.length+' Kiste'+(A.boxes.length!==1?'n':'')+' erfasst';}
+function updateStatusBar(){
+  const last=localStorage.getItem('last_backup');
+  const sb=document.getElementById('status-bar');
+  if(last){const d=new Date(last);sb.innerHTML=`<div class="info-box info-ok"><div class="dot dot-g"></div><span>Letztes Backup: ${d.toLocaleDateString('de-CH')} ${d.toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}
+  else{sb.innerHTML=`<div class="info-box info-warn"><div class="dot dot-a"></div><span>Noch kein Backup erstellt – Daten sichern empfohlen</span></div>`;}
+}
+function persist(){localStorage.setItem('kisten_v2',JSON.stringify(A.boxes));}
+
+function goTab(t){
+  if(t!=='scan')stopScanner();
+  document.querySelectorAll('.tab,.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  closeSheet();
+  if(t==='list')renderBoxList();
+  if(t==='search'){document.getElementById('search-input').value='';document.getElementById('search-results').innerHTML='';}
+}
+
+function renderCatGrid(){
+  document.getElementById('cat-grid').innerHTML=CATS.map(c=>
+    `<button class="cat-pill${A.selectedCat===c?' on':''}" onclick="selCat('${c}')">${c}</button>`).join('');
+}
+function selCat(c){A.selectedCat=A.selectedCat===c?'':c;renderCatGrid();}
+
+function addPhotos(input){
+  Array.from(input.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{A.photos.push(e.target.result);renderPhotoGrid();};
+    r.readAsDataURL(f);
+  });input.value='';
+}
+function renderPhotoGrid(){
+  document.getElementById('photo-grid').innerHTML=A.photos.map((p,i)=>
+    `<div class="photo-thumb"><img src="${p}" alt=""><button class="photo-del" onclick="rmPhoto(${i})">×</button></div>`).join('');
+}
+function rmPhoto(i){A.photos.splice(i,1);renderPhotoGrid();}
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    const t=document.getElementById('voice-transcript');t.style.display='block';t.textContent='Spracheingabe nicht verfügbar – bitte Notizen nutzen.';return;
+  }
+  if(A.isRecording){A.recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const r=new SR();r.lang='de-CH';r.continuous=true;r.interimResults=true;A.recognition=r;
+  r.onresult=e=>{
+    let fin='',intr='';
+    for(let i=e.resultIndex;i<e.results.length;i++)e.results[i].isFinal?fin+=e.results[i][0].transcript:intr+=e.results[i][0].transcript;
+    A.voiceText+=fin;
+    const t=document.getElementById('voice-transcript');t.textContent=A.voiceText+(intr?' ['+intr+']':'');
+  };
+  r.onend=()=>{A.isRecording=false;document.getElementById('voice-btn').classList.remove('rec');document.getElementById('voice-label').textContent='Aufnahme starten';};
+  r.start();A.isRecording=true;
+  document.getElementById('voice-btn').classList.add('rec');
+  document.getElementById('voice-label').textContent='Aufnahme läuft – tippen zum Stoppen';
+  document.getElementById('voice-transcript').style.display='block';
+  document.getElementById('voice-transcript').textContent='Höre zu…';
+}
+
+async function analyzeBox(){
+  const notes=document.getElementById('notes-input').value;
+  if(!A.photos.length&&!A.voiceText.trim()&&!notes.trim()){alert('Bitte Foto, Sprache oder Notizen hinzufügen.');return;}
+  const btn=document.getElementById('analyze-btn');
+  btn.disabled=true;btn.innerHTML='⏳ KI analysiert...';
+  document.getElementById('result-area').style.display='none';
+  try{
+    const content=[];
+    A.photos.forEach(p=>{
+      const mime=p.split(';')[0].split(':')[1];
+      content.push({type:'image',source:{type:'base64',media_type:mime,data:p.split(',')[1]}});
+    });
+    let prompt='Analysiere den Inhalt dieser Kiste und erstelle eine präzise deutsche Inhaltsliste.\n';
+    if(A.voiceText)prompt+=`Gesprochene Beschreibung: "${A.voiceText}"\n`;
+    if(notes)prompt+=`Notizen: "${notes}"\n`;
+    prompt+='Antworte NUR mit JSON: {"items":["Artikel 1","Artikel 2",...]}';
+    content.push({type:'text',text:prompt});
+
+    // Ruft unsere eigene Netlify Function auf – kein CORS Problem
+    const resp=await fetch('/.netlify/functions/analyze',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content}]})
+    });
+    const rawText=await resp.text();
+    let data;
+    try{data=JSON.parse(rawText);}catch(e){alert('Antwort konnte nicht gelesen werden: '+rawText.substring(0,200));return;}
+    if(data.error){alert('API Fehler: '+data.error);return;}
+    const text=(data.content||[]).map(b=>b.text||'').join('');
+    if(!text){alert('Keine Antwort von KI. Rohdaten: '+rawText.substring(0,200));return;}
+    const match=text.match(/\{[\s\S]*\}/);
+    let items=[];
+    if(match){try{items=JSON.parse(match[0]).items||[];}catch(e){}}
+    if(!items.length)items=text.split('\n').map(l=>l.replace(/^[-•*\d.]+\s*/,'')).filter(l=>l.trim().length>2).slice(0,30);
+    if(!items.length){alert('KI hat geantwortet aber keine Liste erstellt. Antwort: '+text.substring(0,200));return;}
+    A.currentItems=items;renderItemList();
+    document.getElementById('result-area').style.display='block';
+    document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){alert('KI-Fehler: '+e.message);}
+  btn.disabled=false;
+  btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> KI-Analyse starten';
+}
+
+function renderItemList(){
+  document.getElementById('item-list').innerHTML=A.currentItems.map((item,i)=>
+    `<div class="item-row"><span style="color:var(--text3);font-size:12px;padding-right:2px">⠿</span><input type="text" value="${item.replace(/"/g,'&quot;')}" oninput="A.currentItems[${i}]=this.value"><button class="item-del" onclick="rmItem(${i})">×</button></div>`).join('');
+}
+function rmItem(i){A.currentItems.splice(i,1);renderItemList();}
+function addItemField(){A.currentItems.push('');renderItemList();const inp=document.querySelectorAll('#item-list .item-row input');if(inp.length)inp[inp.length-1].focus();}
+function addNewItem(){const inp=document.getElementById('new-item-input');if(inp.value.trim()){A.currentItems.push(inp.value.trim());inp.value='';renderItemList();}}
+
+function saveBox(){
+  const items=Array.from(document.querySelectorAll('#item-list .item-row input')).map(i=>i.value.trim()).filter(Boolean);
+  if(!items.length){alert('Bitte mindestens einen Artikel erfassen.');return;}
+  const box={id:'K-'+String(A.boxes.length+1).padStart(4,'0'),created:new Date().toISOString(),category:A.selectedCat,location:document.getElementById('loc-input').value.trim(),items,notes:document.getElementById('notes-input').value};
+  A.boxes.push(box);persist();updateCount();resetForm();showSheet(box);
+}
+function resetForm(){
+  A.photos=[];A.voiceText='';A.selectedCat='';A.currentItems=[];
+  document.getElementById('photo-grid').innerHTML='';
+  document.getElementById('voice-transcript').style.display='none';
+  document.getElementById('notes-input').value='';
+  document.getElementById('loc-input').value='';
+  document.getElementById('result-area').style.display='none';
+  renderCatGrid();
+}
+
+async function startScanner(){
+  document.getElementById('scan-start').style.display='none';
+  document.getElementById('scan-result').style.display='none';
+  document.getElementById('scan-active').style.display='block';
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}}});
+    A.scanStream=stream;const video=document.getElementById('scan-video');video.srcObject=stream;await video.play();runScan(video);
+  }catch(e){stopScanner();alert('Kamerazugriff nicht möglich: '+e.message);}
+}
+function runScan(video){
+  const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');
+  function tick(){
+    if(!A.scanStream)return;
+    if(video.readyState===video.HAVE_ENOUGH_DATA){
+      canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0);
+      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+      if(code){stopScanner();handleQR(code.data.trim());return;}
+    }
+    A.scanRaf=requestAnimationFrame(tick);
+  }
+  A.scanRaf=requestAnimationFrame(tick);
+}
+function stopScanner(){
+  if(A.scanRaf){cancelAnimationFrame(A.scanRaf);A.scanRaf=null;}
+  if(A.scanStream){A.scanStream.getTracks().forEach(t=>t.stop());A.scanStream=null;}
+  const v=document.getElementById('scan-video');if(v)v.srcObject=null;
+  document.getElementById('scan-active').style.display='none';
+  document.getElementById('scan-start').style.display='block';
+}
+function handleQR(raw){
+  const m=raw.match(/K-\d{4}/i);const id=m?m[0].toUpperCase():raw.toUpperCase();
+  const box=A.boxes.find(b=>b.id.toUpperCase()===id);
+  const el=document.getElementById('scan-result');
+  el.style.display='block';document.getElementById('scan-start').style.display='none';
+  if(box){
+    const safe=JSON.stringify(box).replace(/"/g,'&quot;');
+    el.innerHTML=`<div class="res-ok"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div style="font-size:20px;font-weight:700;margin-bottom:4px">${box.id}</div><div style="font-size:13px;color:var(--green);margin-bottom:12px">${box.items.length} Artikel${box.category?' · '+box.category:''}${box.location?' · '+box.location:''}</div><button class="btn btn-primary" style="margin-bottom:8px" onclick="showSheet('${safe}')">Kiste öffnen</button><button class="btn btn-secondary" style="margin-top:0" onclick="resetScan()">Neu scannen</button></div>`;
+  }else{
+    el.innerHTML=`<div class="res-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div style="font-size:15px;font-weight:600;margin-bottom:4px">"${id}" nicht gefunden</div><div style="font-size:13px;color:var(--red);margin-bottom:12px">Diese Kiste ist nicht im System.</div><button class="btn btn-secondary" style="margin-top:0" onclick="resetScan()">Nochmals versuchen</button></div>`;
+  }
+}
+function manualLookup(){const v=document.getElementById('manual-id').value.trim().toUpperCase();if(!v)return;handleQR(v);document.getElementById('manual-id').value='';}
+function resetScan(){document.getElementById('scan-result').style.display='none';document.getElementById('scan-start').style.display='block';}
+
+function showSheet(box){
+  if(typeof box==='string')box=JSON.parse(box);
+  A.activeBoxId=box.id;
+  document.getElementById('sheet-id').textContent=box.id;
+  document.getElementById('sheet-meta').textContent=[box.category,box.location,new Date(box.created).toLocaleDateString('de-CH')].filter(Boolean).join(' · ');
+  document.getElementById('sheet-items').innerHTML=box.items.map(i=>`<div class="sheet-item">${i}</div>`).join('');
+  drawQR(box);
+  document.getElementById('qr-sheet').style.display='block';
+  document.getElementById('qr-sheet').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeSheet(){document.getElementById('qr-sheet').style.display='none';A.activeBoxId=null;}
+function deleteBox(){
+  if(!A.activeBoxId)return;
+  if(!confirm('Kiste '+A.activeBoxId+' wirklich löschen?'))return;
+  A.boxes=A.boxes.filter(b=>b.id!==A.activeBoxId);persist();updateCount();closeSheet();
+  if(document.getElementById('panel-list').classList.contains('active'))renderBoxList();
+}
+
+function drawQR(box){
+  const c=document.getElementById('qr-canvas');const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,200,200);ctx.fillStyle='#fff';ctx.fillRect(0,0,200,200);
+  ctx.fillStyle='#111';ctx.font='bold 22px monospace';ctx.textAlign='center';ctx.fillText(box.id,100,92);
+  ctx.font='11px sans-serif';ctx.fillStyle='#666';ctx.fillText(box.category||'Kisten-Inventar',100,112);
+  const prev=box.items.slice(0,2).join(', ')+(box.items.length>2?'...':'');
+  ctx.font='10px sans-serif';ctx.fillStyle='#999';ctx.fillText(prev.substring(0,30),100,128);
+  const s=6;
+  function finder(ox,oy){ctx.fillStyle='#111';ctx.fillRect(ox,oy,7*s,7*s);ctx.fillStyle='#fff';ctx.fillRect(ox+s,oy+s,5*s,5*s);ctx.fillStyle='#111';ctx.fillRect(ox+2*s,oy+2*s,3*s,3*s);}
+  ctx.save();ctx.translate(8,140);ctx.scale(0.68,0.68);
+  finder(0,0);finder(7*s*1.65,0);finder(0,7*s*1.65);
+  const seed=box.id.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  ctx.fillStyle='#111';
+  for(let r=0;r<6;r++)for(let c2=0;c2<6;c2++)if((seed*(r+1)*(c2+2))%3===0)ctx.fillRect(2*s+c2*s*1.6,2*s+r*s*1.6,s,s);
+  ctx.restore();
+  ctx.fillStyle='#111';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText(box.id,100,196);
+}
+
+function printQR(){
+  const id=document.getElementById('sheet-id').textContent;
+  const meta=document.getElementById('sheet-meta').textContent;
+  // Load QR library if needed, then print
+  function doprint(){
+    QRCode.toDataURL(id,{width:200,margin:2,color:{dark:'#000000',light:'#ffffff'}},function(err,url){
+      // Create a hidden print div
+      var old=document.getElementById('print-overlay');
+      if(old)old.remove();
+      var div=document.createElement('div');
+      div.id='print-overlay';
+      div.style.cssText='display:none';
+      div.innerHTML='<div class="print-content"><img src="'+(err?'':url)+'" width="200"><div class="print-id">'+id+'</div><div class="print-meta">'+meta+'</div></div>';
+      document.body.appendChild(div);
+      // Add print styles
+      var st=document.getElementById('print-style');
+      if(!st){
+        st=document.createElement('style');
+        st.id='print-style';
+        st.textContent='@media print{body>*:not(#print-overlay){display:none!important}#print-overlay{display:block!important;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center}.print-content{display:flex;flex-direction:column;align-items:center;font-family:monospace}.print-id{font-size:20px;font-weight:bold;margin-top:8px}.print-meta{font-size:11px;color:#666;margin-top:4px;text-align:center}}';
+        document.head.appendChild(st);
+      }
+      window.print();
+    });
+  }
+  if(typeof QRCode==='undefined'){
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+    s.onload=doprint;
+    document.head.appendChild(s);
+  } else {
+    doprint();
+  }
+}
+
+function renderBoxList(filterCat){
+  const fb=document.getElementById('filter-bar');
+  const cats=[...new Set(A.boxes.map(b=>b.category).filter(Boolean))];
+  fb.innerHTML=`<button class="fp${!filterCat?' on':''}" onclick="renderBoxList()">Alle</button>`+cats.map(c=>`<button class="fp${filterCat===c?' on':''}" onclick="renderBoxList('${c}')">${c}</button>`).join('');
+  const list=filterCat?A.boxes.filter(b=>b.category===filterCat):A.boxes;
+  const el=document.getElementById('box-list');
+  if(!list.length){el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Noch keine Kisten erfasst</div>`;return;}
+  el.innerHTML=list.map(b=>{
+    const safe=JSON.stringify(b).replace(/"/g,'&quot;');
+    return `<div class="box-card" onclick="showSheet('${safe}')"><div class="box-top"><span class="box-id">${b.id}</span><div style="display:flex;gap:4px;flex-wrap:wrap">${b.category?`<span class="badge b-green">${b.category}</span>`:''}<span class="badge b-blue">${b.items.length} Artikel</span></div></div><div class="box-items">${b.items.slice(0,4).join(' · ')}${b.items.length>4?' +'+(b.items.length-4):''}</div><div class="box-meta">${b.location||''}</div></div>`;
+  }).join('');
+}
+
+function doSearch(q){
+  if(!q.trim()){document.getElementById('search-results').innerHTML='';return;}
+  const ql=q.toLowerCase();
+  const results=A.boxes.map(b=>{const matched=b.items.filter(i=>i.toLowerCase().includes(ql));const hit=matched.length||(b.id||'').toLowerCase().includes(ql)||(b.category||'').toLowerCase().includes(ql)||(b.location||'').toLowerCase().includes(ql);return hit?{box:b,matched}:null;}).filter(Boolean);
+  const el=document.getElementById('search-results');
+  if(!results.length){el.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Nichts gefunden für "${q}"</div>`;return;}
+  el.innerHTML=results.map(r=>{
+    const safe=JSON.stringify(r.box).replace(/"/g,'&quot;');
+    const hl=t=>t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<span class="highlight">$1</span>');
+    return `<div class="box-card" onclick="showSheet('${safe}')"><div class="box-top"><span class="box-id">${r.box.id}</span><span class="badge b-blue">${r.matched.length||'✓'} Treffer</span></div><div class="box-items">${(r.matched.length?r.matched:r.box.items.slice(0,3)).map(i=>hl(i)).join(' · ')}</div><div class="box-meta">${[r.box.category,r.box.location].filter(Boolean).join(' · ')}</div></div>`;
+  }).join('');
+}
+
+function exportJSON(){
+  const data={boxes:A.boxes,version:1,exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kisten-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  localStorage.setItem('last_backup',new Date().toISOString());updateStatusBar();
+}
+function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.boxes||!Array.isArray(data.boxes))throw new Error('Ungültiges Format');
+      const existing=new Set(A.boxes.map(b=>b.id));let added=0;
+      data.boxes.forEach(b=>{if(!existing.has(b.id)){A.boxes.push(b);added++;}});
+      persist();updateCount();
+      document.getElementById('import-status').innerHTML=`<div class="info-box info-ok" style="margin-top:0"><div class="dot dot-g"></div><span>${added} neue Kisten importiert (${A.boxes.length} total)</span></div>`;
+      localStorage.setItem('last_backup',new Date().toISOString());updateStatusBar();
+    }catch(err){document.getElementById('import-status').innerHTML=`<div class="info-box" style="background:var(--red-bg);color:var(--red);margin-top:0"><div class="dot" style="background:var(--red)"></div><span>Fehler: ${err.message}</span></div>`;}
+  };
+  reader.readAsText(file);input.value='';
+}
+function clearAll(){if(confirm('Wirklich ALLE '+A.boxes.length+' Kisten löschen?')){A.boxes=[];persist();updateCount();document.getElementById('box-list').innerHTML='';updateStatusBar();}}
+
+init();
+</script>
+</body>
+</html>
